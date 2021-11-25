@@ -34,7 +34,10 @@ class ArbToDartGenerator {
   }
 
   void _buildIntlListFile(
-      ArbDocument document, String directory, String className) {
+    ArbDocument document,
+    String directory,
+    String className,
+  ) {
     var translationClass = Class((ClassBuilder builder) {
       builder.name = ReCase(className).pascalCase;
       builder.docs.add(
@@ -52,7 +55,7 @@ class ArbToDartGenerator {
 
     final emitter = DartEmitter(allocator: Allocator.simplePrefixing());
     final emitted = library.accept(emitter);
-    final formatted = DartFormatter().format('$emitted');
+    final formatted = DartFormatter().format('${emitted}');
 
     final file = File('${directory}/${className.toLowerCase()}.dart');
     file.createSync();
@@ -75,7 +78,7 @@ class ArbToDartGenerator {
         ..lambda = true
         ..docs.add('/// ${docs}');
 
-      if (resource.placeholders!.isNotEmpty) {
+      if (resource.placeholders?.isNotEmpty ?? false) {
         return _getResourceFullMethod(resource, builder);
       } else {
         return _getResourceGetter(resource, builder);
@@ -90,16 +93,19 @@ class ArbToDartGenerator {
         _escapeString((resource.attributes['description'] ??= '') as String);
 
     var args = <String>[];
-    resource.placeholders!.forEach((ArbResourcePlaceholder placeholder) {
-      builder.requiredParameters.add(Parameter((ParameterBuilder builder) {
-        args.add(placeholder.name);
-        final argumentType = placeholder.type == ArbResourcePlaceholder.typeNum
-            ? 'int'
-            : 'String';
-        builder
-          ..name = placeholder.name
-          ..type = Reference(argumentType);
-      }));
+    resource.placeholders?.forEach((ArbResourcePlaceholder placeholder) {
+      builder.requiredParameters.add(
+        Parameter((ParameterBuilder builder) {
+          args.add(placeholder.name);
+          final argumentType =
+              placeholder.type == ArbResourcePlaceholder.typeNum
+                  ? 'int'
+                  : 'String';
+          builder
+            ..name = placeholder.name
+            ..type = Reference(argumentType);
+        }),
+      );
     });
 
     builder
@@ -264,7 +270,7 @@ String _escapeString(String string) {
   return sb.toString();
 }
 
-String toUnicode(int charCode) {
+String toUnicode(int? charCode) {
   if (charCode == null || charCode < 0 || charCode > _UNICODE_END) {
     throw ArgumentError('charCode: $charCode');
   }
